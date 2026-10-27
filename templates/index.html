@@ -1,0 +1,848 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriVision AI | Plant Disease Detection</title>
+
+  <style>
+    :root {
+      --bg: #f4f3ff;
+      --surface: #ffffff;
+      --surface-alt: #f5f4ff;
+      --text: #292d55;
+      --muted: #6d718c;
+      --border: #dedcf5;
+      --accent: #6254c7;
+      --accent-dark: #493ba8;
+      --accent-soft: #eae7ff;
+      --danger: #a53e37;
+      --shadow: 0 8px 24px rgba(54, 44, 120, 0.08);
+    }
+
+    html[data-theme="dark"] {
+      --bg: #171629;
+      --surface: #222139;
+      --surface-alt: #2b2947;
+      --text: #f0efff;
+      --muted: #c0bedb;
+      --border: #454267;
+      --accent: #a99cff;
+      --accent-dark: #c5bbff;
+      --accent-soft: #373154;
+      --danger: #ffb7ae;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 240px;
+      padding: 28px 17px;
+      overflow-y: auto;
+      background: #29254f;
+      color: white;
+    }
+
+    .brand {
+      display: flex;
+      gap: 11px;
+      align-items: center;
+      padding: 0 8px 26px;
+    }
+
+    .brand-icon { font-size: 31px; }
+    .brand strong { font-size: 18px; }
+
+    .brand small {
+      display: block;
+      margin-top: 3px;
+      color: #d9d3ff;
+      font-size: 11px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 11px 12px;
+      margin: 5px 0;
+      border-radius: 8px;
+      color: #e4e0ff;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .sidebar a:hover { background: #6254c7; }
+
+    main {
+      margin-left: 240px;
+      max-width: 1540px;
+      padding: 28px 34px 48px;
+    }
+
+    .topbar, .heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .topbar { margin-bottom: 24px; }
+    .topbar h1 { margin: 6px 0; font-size: clamp(25px, 3vw, 34px); }
+
+    .topbar p, .heading p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+    }
+
+    .theme-toggle, .btn {
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 15px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .theme-toggle {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .btn {
+      background: var(--accent);
+      color: white;
+      margin: 5px 5px 5px 0;
+    }
+
+    .btn:hover { background: var(--accent-dark); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+      padding: 28px;
+      border-radius: 17px;
+      background: linear-gradient(135deg, #6254c7, #42376f);
+      color: white;
+      box-shadow: var(--shadow);
+    }
+
+    .hero .eyebrow, .hero p { color: #e4e0ff; }
+    .hero h2 { margin: 8px 0; font-size: 28px; }
+
+    .hero-icon {
+      display: grid;
+      place-items: center;
+      min-height: 145px;
+      border-radius: 14px;
+      background: #ffffff16;
+      font-size: 95px;
+    }
+
+    section {
+      margin-top: 32px;
+      scroll-margin-top: 15px;
+    }
+
+    .heading { margin-bottom: 15px; }
+    .heading h2 { margin: 0 0 5px; font-size: 21px; }
+
+    .badge {
+      display: inline-block;
+      border-radius: 99px;
+      padding: 7px 10px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-size: 12px;
+      white-space: normal;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    /* Exactly two equal-width cards for the live robot sensors. */
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .metric-card, .card {
+      min-width: 0;
+      padding: 19px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .metric-card span { font-size: 25px; }
+    .metric-card .sensor-detail span { font-size: 13px; }
+    .metric-card .sensor-detail { line-height: 1.5; }
+
+    .metric-card p {
+      margin: 10px 0 5px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric-card strong {
+      color: var(--accent);
+      font-size: 24px;
+    }
+
+    .two-columns {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .card h3 { margin-top: 0; }
+
+    .upload-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 25px 15px;
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      background: var(--surface-alt);
+      text-align: center;
+    }
+
+    .upload-box span { font-size: 38px; }
+
+    .upload-box small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="file"] {
+      max-width: 100%;
+      color: var(--text);
+    }
+
+    #leaf-preview, #camera-image, .graph {
+      display: block;
+      width: 100%;
+      max-height: 350px;
+      margin: 14px 0;
+      border-radius: 9px;
+      background: var(--surface-alt);
+      object-fit: contain;
+    }
+
+    #camera-image { min-height: 180px; }
+    .result-card { min-height: 290px; }
+
+    .result-box {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface-alt);
+    }
+
+    .result-box h2 {
+      margin: 7px 0;
+      color: var(--accent);
+      font-size: 21px;
+    }
+
+    .result-box li {
+      margin: 5px 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .progress {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--border);
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+
+    .empty {
+      display: grid;
+      min-height: 170px;
+      place-content: center;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty span { font-size: 40px; }
+
+    .message {
+      margin-bottom: 16px;
+      padding: 13px;
+      border-radius: 9px;
+    }
+
+    .error {
+      border: 1px solid #f2c9c4;
+      background: #fff0ee;
+      color: var(--danger);
+    }
+
+    .good { color: #25965c; }
+    .bad { color: var(--danger); }
+    .model-status { margin-top: 32px; }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        position: static;
+        display: flex;
+        width: auto;
+        gap: 4px;
+        align-items: center;
+        padding: 12px;
+        overflow-x: auto;
+      }
+
+      .brand { flex: none; padding: 0 8px; }
+      .brand small { display: none; }
+      .sidebar a { white-space: nowrap; }
+      main { margin-left: 0; padding: 22px 16px; }
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 620px) {
+      .topbar, .heading { flex-direction: column; }
+      .hero, .two-columns, .metrics-grid, .sensor-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-icon">🌿</span>
+      <div>
+        <strong>AgriVision AI</strong>
+        <small>38-class PlantVillage model</small>
+      </div>
+    </div>
+
+    <a href="#detect">Leaf detection</a>
+    <a href="#camera">ESP32-CAM</a>
+    <a href="#sensors">Sensors</a>
+    <a href="#metrics">Model metrics</a>
+    <a href="#graphs">Graphs</a>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">SMART AGRICULTURE</p>
+        <h1>Plant Disease Detection Dashboard</h1>
+        <p>EfficientNetB0 CNN · 38 PlantVillage disease classes</p>
+      </div>
+
+      <button id="theme-toggle" class="theme-toggle" type="button">
+        🌙 Dark mode
+      </button>
+    </header>
+
+    {% if error %}
+      <div class="message error">{{ error }}</div>
+    {% endif %}
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">FINAL TRAINED MODEL</p>
+        <h2>38 plant and disease classes in one dashboard.</h2>
+        <p>
+          Final unseen-test accuracy:
+          {{ metrics.get('final_test_accuracy_percent', '--') }}%
+          across {{ metrics.get('test_images', '--') }} test images.
+        </p>
+      </div>
+      <div class="hero-icon">🍃</div>
+    </section>
+
+    <section id="sensors">
+      <div class="heading">
+        <div>
+          <h2>Live Field Sensors</h2>
+          <p>Real-time readings from the FC-28 and HC-SR04 sensors.</p>
+        </div>
+        <span id="device-status" class="badge">Connecting to robot...</span>
+      </div>
+
+      <div class="sensor-grid">
+        <article class="metric-card">
+          <span aria-hidden="true">🌱</span>
+          <p>FC-28 Soil Sensor (raw ADC)</p>
+          <strong id="soil-moisture">-- ADC</strong>
+        </article>
+
+        <article class="metric-card">
+          <span aria-hidden="true">📏</span>
+          <p>HC-SR04 Ultrasonic Sensor</p>
+          <strong id="distance">-- cm</strong>
+        </article>
+      </div>
+    </section>
+
+    <section id="detect">
+      <div class="heading">
+        <div>
+          <h2>Manual leaf-image prediction</h2>
+          <p>Upload one clear leaf photo for disease prediction.</p>
+        </div>
+      </div>
+
+      <div class="two-columns">
+        <article class="card">
+          <h3>Upload leaf image</h3>
+
+          <form action="{{ url_for('predict_upload') }}"
+                method="POST"
+                enctype="multipart/form-data"
+                id="upload-form">
+            <label class="upload-box" for="leaf-file">
+              <span>📷</span>
+              <b>Select JPG or PNG image</b>
+              <small>Use a clear, well-lit photo of one leaf.</small>
+              <input id="leaf-file"
+                     name="image"
+                     type="file"
+                     accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                     required>
+              <img id="leaf-preview" alt="Selected leaf preview" hidden>
+            </label>
+
+            <button id="upload-button" class="btn" type="submit">
+              Analyze uploaded image
+            </button>
+          </form>
+        </article>
+
+        <article class="card result-card">
+          <h3>Upload result</h3>
+
+          {% if prediction %}
+            <div class="result-box">
+              <p class="eyebrow">{{ disease_info.status }}</p>
+              <h2>{{ display_name }}</h2>
+              <p><b>Confidence:</b> {{ confidence }}%</p>
+
+              <div class="progress">
+                <span style="width: {{ confidence }}%"></span>
+              </div>
+
+              <h4>Top predictions</h4>
+              <ul>
+                {% for item in top_predictions %}
+                  <li>{{ item.name }} — <b>{{ item.confidence }}%</b></li>
+                {% endfor %}
+              </ul>
+
+              <h4>Recommended actions</h4>
+              <ul>
+                {% for action in disease_info.actions %}
+                  <li>{{ action }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% else %}
+            <div class="empty">
+              <span>🔬</span>
+              <p>No upload prediction yet.</p>
+            </div>
+          {% endif %}
+        </article>
+      </div>
+    </section>
+
+    <section id="camera">
+      <div class="heading">
+        <div>
+          <h2>ESP32-CAM prediction</h2>
+          <p>Capture a still photo, save it to Flask, then predict the disease.</p>
+        </div>
+        <span id="camera-status" class="badge">Camera not tested yet</span>
+      </div>
+
+      <div class="two-columns">
+        <article class="card">
+          <h3>Captured ESP32-CAM photo</h3>
+
+          <div id="camera-empty" class="empty">
+            <span>📸</span>
+            <p>Click Capture Photo to get a still image.</p>
+          </div>
+
+          <img id="camera-image"
+               alt="Captured ESP32-CAM photo"
+               hidden>
+
+          <button id="capture-button" class="btn" type="button">
+            Capture photo from ESP32-CAM
+          </button>
+
+          <button id="camera-button" class="btn" type="button" disabled>
+            Predict captured photo
+          </button>
+        </article>
+
+        <article class="card result-card">
+          <h3>ESP32-CAM prediction result</h3>
+          <div id="camera-result" class="empty" aria-live="polite">
+            <span>🤖</span>
+            <p>Capture a photo, then click Predict.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="metrics">
+      <div class="heading">
+        <div>
+          <h2>Final unseen-test performance</h2>
+          <p>Calculated using your test split.</p>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <article class="metric-card">
+          <p>Test accuracy</p>
+          <strong>{{ metrics.get('final_test_accuracy_percent', '--') }}%</strong>
+        </article>
+        <article class="metric-card">
+          <p>Precision</p>
+          <strong>{{ metrics.get('weighted_test_precision_percent', '--') }}%</strong>
+        </article>
+        <article class="metric-card">
+          <p>Recall</p>
+          <strong>{{ metrics.get('weighted_test_recall_percent', '--') }}%</strong>
+        </article>
+        <article class="metric-card">
+          <p>F1-score</p>
+          <strong>{{ metrics.get('weighted_test_f1_score_percent', '--') }}%</strong>
+        </article>
+      </div>
+    </section>
+
+    <section id="graphs">
+      <div class="heading">
+        <div>
+          <h2>Model graphs</h2>
+          <p>Training accuracy and final test metrics.</p>
+        </div>
+      </div>
+
+      <div class="two-columns">
+        <article class="card">
+          <h3>Training and validation accuracy</h3>
+          <img class="graph"
+               src="{{ url_for('static', filename='graphs/plantvillage38/plantvillage38_accuracy_graph.png') }}"
+               alt="Training and validation accuracy graph">
+        </article>
+
+        <article class="card">
+          <h3>Final precision, recall, and F1-score</h3>
+          <img class="graph"
+               src="{{ url_for('static', filename='graphs/plantvillage38/plantvillage38_precision_recall_f1_graph.png') }}"
+               alt="Final precision recall and F1 score graph">
+        </article>
+      </div>
+    </section>
+
+    <section class="card model-status">
+      <h3>Model status</h3>
+      {% if model_ready %}
+        <p class="good">● Final 38-class model and class mapping loaded successfully.</p>
+      {% else %}
+        <p class="bad">● Model is not loaded: {{ model_error }}</p>
+      {% endif %}
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const themeButton = document.getElementById("theme-toggle");
+
+      root.dataset.theme =
+        localStorage.getItem("agrivision-theme") || "light";
+
+      function updateThemeButton() {
+        themeButton.textContent =
+          root.dataset.theme === "dark" ? "☀️ Light mode" : "🌙 Dark mode";
+      }
+
+      themeButton.addEventListener("click", () => {
+        root.dataset.theme =
+          root.dataset.theme === "dark" ? "light" : "dark";
+        localStorage.setItem("agrivision-theme", root.dataset.theme);
+        updateThemeButton();
+      });
+
+      updateThemeButton();
+
+      const fileInput = document.getElementById("leaf-file");
+      const preview = document.getElementById("leaf-preview");
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (!file) {
+          preview.hidden = true;
+          return;
+        }
+        preview.src = URL.createObjectURL(file);
+        preview.hidden = false;
+      });
+
+      document.getElementById("upload-form").addEventListener("submit", () => {
+        const button = document.getElementById("upload-button");
+        button.textContent = "Analyzing…";
+        button.disabled = true;
+      });
+
+    
+function formatSensorValue(value, unit, decimals = 1) {
+    if (value === null || value === undefined || value === "") {
+        return "-- " + unit;
+    }
+
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "-- " + unit;
+
+    return number.toFixed(decimals) + " " + unit;
+}
+
+async function refreshSensors() {
+    const status = document.getElementById("device-status");
+
+    try {
+        const response = await fetch("/sensor_data", {
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+        }
+
+        const data = await response.json();
+
+        
+document.getElementById("soil-moisture").textContent =
+    data.soilRaw == null ? "-- ADC" : data.soilRaw + " ADC";
+
+document.getElementById("distance").textContent =
+    formatSensorValue(data.distance, "cm");
+
+
+        status.textContent = "Robot connected";
+
+    } catch (error) {
+        status.textContent = "Sensor connection error";
+        console.error("Sensor refresh failed:", error);
+    }
+}
+
+refreshSensors();
+setInterval(refreshSensors, 2000);
+
+
+      const cameraImage = document.getElementById("camera-image");
+      const cameraEmpty = document.getElementById("camera-empty");
+      const cameraStatus = document.getElementById("camera-status");
+      const captureButton = document.getElementById("capture-button");
+      const predictButton = document.getElementById("camera-button");
+      const cameraResult = document.getElementById("camera-result");
+
+      let uploading = false;
+      let capturedSuccessfully = false;
+
+      async function captureAndUpload() {
+        if (uploading) return;
+        uploading = true;
+        capturedSuccessfully = false;
+        predictButton.disabled = true;
+
+        try {
+          cameraStatus.textContent = "Capturing photo from ESP32-CAM...";
+
+          // Flask fetches the camera image server-side, avoiding browser CORS errors.
+          const response = await fetch("/api/capture-camera", {
+            method: "POST",
+            cache: "no-store"
+          });
+          const data = await response.json();
+
+          if (!response.ok || data.status !== "success") {
+            throw new Error(data.message || "Flask could not capture the ESP32-CAM photo.");
+          }
+
+          const imageUrl = data.image_url || "/static/camera/latest.jpg";
+          cameraImage.onload = () => {
+            cameraImage.hidden = false;
+            cameraEmpty.hidden = true;
+          };
+          cameraImage.onerror = () => {
+            cameraStatus.textContent = "Photo saved, but the dashboard could not display it.";
+          };
+          cameraImage.src = imageUrl + "?t=" + Date.now();
+
+          capturedSuccessfully = true;
+          predictButton.disabled = false;
+          cameraStatus.textContent = "Captured photo saved to Flask";
+          cameraResult.className = "empty";
+          cameraResult.textContent = "Photo captured. Click Predict captured photo.";
+        } catch (error) {
+          cameraStatus.textContent = "Capture failed";
+          cameraResult.className = "message error";
+          cameraResult.textContent =
+            "Could not capture/save photo. Connect this laptop to Robot_Control Wi-Fi, confirm http://192.168.4.3/capture opens, and check the Flask terminal. " +
+            error.message;
+          console.error("ESP32-CAM capture error:", error);
+        } finally {
+          uploading = false;
+        }
+      }
+
+      captureButton.addEventListener("click", async () => {
+        captureButton.disabled = true;
+        captureButton.textContent = "Capturing photo...";
+        await captureAndUpload();
+        captureButton.disabled = false;
+        captureButton.textContent = "Capture photo from ESP32-CAM";
+      });
+
+      predictButton.addEventListener("click", async () => {
+        if (!capturedSuccessfully) {
+          cameraResult.className = "message error";
+          cameraResult.textContent = "Capture and save a photo before predicting.";
+          return;
+        }
+
+        predictButton.disabled = true;
+        predictButton.textContent = "Analyzing...";
+        cameraResult.className = "empty";
+        cameraResult.textContent = "Analyzing the captured photo...";
+
+        try {
+          const response = await fetch("/api/predict-camera", {
+            method: "POST"
+          });
+
+          const data = await response.json();
+
+          if (!response.ok || data.status === "error") {
+            throw new Error(data.message || "Camera prediction failed.");
+          }
+
+          const resultBox = document.createElement("div");
+          resultBox.className = "result-box";
+
+          const status = document.createElement("p");
+          status.className = "eyebrow";
+          status.textContent =
+            (data.recommendation && data.recommendation.status) ||
+            "Prediction complete";
+          resultBox.appendChild(status);
+
+          const title = document.createElement("h2");
+          title.textContent = data.display_name || data.prediction || "Unknown";
+          resultBox.appendChild(title);
+
+          const confidence = document.createElement("p");
+          confidence.textContent =
+            "Confidence: " + (data.confidence ?? "--") + "%";
+          resultBox.appendChild(confidence);
+
+          const progress = document.createElement("div");
+          progress.className = "progress";
+
+          const bar = document.createElement("span");
+          const confidenceValue = Number(data.confidence) || 0;
+          bar.style.width =
+            Math.min(100, Math.max(0, confidenceValue)) + "%";
+
+          progress.appendChild(bar);
+          resultBox.appendChild(progress);
+
+          const topItems = data.top_predictions || [];
+          if (topItems.length) {
+            const heading = document.createElement("h4");
+            heading.textContent = "Top predictions";
+            resultBox.appendChild(heading);
+
+            const list = document.createElement("ul");
+            topItems.forEach(item => {
+              const li = document.createElement("li");
+              li.textContent = item.name + " — " + item.confidence + "%";
+              list.appendChild(li);
+            });
+            resultBox.appendChild(list);
+          }
+
+          const recommendation = data.recommendation || {};
+          if (recommendation.actions && recommendation.actions.length) {
+            const heading = document.createElement("h4");
+            heading.textContent = "Recommended actions";
+            resultBox.appendChild(heading);
+
+            const list = document.createElement("ul");
+            recommendation.actions.forEach(action => {
+              const li = document.createElement("li");
+              li.textContent = action;
+              list.appendChild(li);
+            });
+            resultBox.appendChild(list);
+          }
+
+          cameraResult.className = "";
+          cameraResult.replaceChildren(resultBox);
+        } catch (error) {
+          cameraResult.className = "message error";
+          cameraResult.textContent = error.message;
+        } finally {
+          predictButton.disabled = false;
+          predictButton.textContent = "Predict captured photo";
+        }
+      });
+      
+
+      
+    })();
+  </script>
+</body>
+</html>

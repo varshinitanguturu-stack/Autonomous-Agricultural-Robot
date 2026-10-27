@@ -1,0 +1,10 @@
+
+Flask
+tensorflow
+numpy
+Pillow
+scikit-learn
+matplotlib
+seaborn
+pandas
+requests
