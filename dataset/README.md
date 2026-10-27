@@ -43,13 +43,12 @@ The system uses an EfficientNetB0 model configured for 38 PlantVillage plant and
 
 ## Dataset
 
-The model is configured for 38 classes from the PlantVillage plant disease dataset.
-
 Dataset information:
-https://www.tensorflow.org/datasets/catalog/plant_village
 
-The dataset images are not included in this repository. Refer to `dataset/README.md` for the dataset preparation details.
+- **Dataset source (TensorFlow):** https://www.tensorflow.org/datasets/catalog/plant_village
+- **Original dataset repository:** https://github.com/spMohanty/PlantVillage-Dataset
 
+The dataset images are not included in this repository. Refer to `dataset/README.md` for dataset preparation details.
 ## Installation
 
 1. Install a Python version compatible with the project's dependencies.
